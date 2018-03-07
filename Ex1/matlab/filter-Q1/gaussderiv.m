@@ -1,0 +1,3 @@
+function [imgDx,imgDy]=gaussderiv(img,sigma)
+
+% ...

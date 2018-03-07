@@ -1,0 +1,3 @@
+function outimage=gaussianfilter(img,sigma)
+
+% ...
