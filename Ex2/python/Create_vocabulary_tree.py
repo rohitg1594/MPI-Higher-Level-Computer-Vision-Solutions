@@ -5,7 +5,7 @@ from sklearn.cluster import AgglomerativeClustering
 from scipy.cluster.hierarchy import linkage
 import numpy as np
 from collections import defaultdict
-
+import cyvlfeat.kmeans as vf
 
 def sift_detect_and_compute(imgs):
     if not isinstance(imgs, list):
@@ -28,7 +28,7 @@ def sift_detect_and_compute(imgs):
 def create_vocabulary_tree(folder):
     # read images
     names = glob.glob('../data/' + folder + '/*.jpg')
-    imgs_c = [cv2.imread(name) for name in names]
+    imgs_c = [cv2.imread(name) for name in names[0:100]]
     imgs_g = [cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in imgs_c]
 
     # detect keypoints and compute descriptors
@@ -44,12 +44,16 @@ def create_vocabulary_tree(folder):
                 desc_to_kp[j + len_comp] = [i, j]
         len_comp += len(desc)
         desc_arr = np.concatenate((desc_arr, desc), axis=0)
-    desc_arr = desc_arr[1:,:]
+    desc_arr = desc_arr[1:,:].astype(np.uint8)
 
     # fit the tree
-    vocab_tree = AgglomerativeClustering(n_clusters=4096, compute_full_tree=False)
-    vocab_tree.fit(desc_arr)
+    vocab_tree, assignments = vf.hikmeans(desc_arr, 8, 4096)
 
+    # query the tree
+    i = np.random.randint(0, len(desc_arr))
+    path_to_leaf = np.asarray(vf.hikmeans_push(desc_arr, vocab_tree))[i]
+    leaf = np.asarray(vocab_tree.children[path_to_leaf[0]].children[path_to_leaf[1]].children[path_to_leaf[2]].centers[path_to_leaf[3]])
+    print(count_visual_words(vocab_tree))
     # create index of clusters to descriptors
     index_desc = defaultdict(list)
     for i, label in enumerate(vocab_tree.labels_):
@@ -62,12 +66,20 @@ def create_vocabulary_tree(folder):
     return kps, vocab_tree, index_desc, index_images, desc_to_kp
 
 
+def count_visual_words(vocab_tree):
+    if len(vocab_tree.children) < 1:
+        return len(vocab_tree.centers)
+    else:
+        count = 0
+        for child in vocab_tree.children:
+            count += count_visual_words(child)
+        return count
+
+    
 def retrieval(img):
     _, vocab_tree, index_desc, index_images, _ = create_vocabulary_tree("Covers_train")
 
     kps, descs, num_kps = sift_detect_and_compute(img)
-    
-    
 
     
 def create_img_index(index_desc):
