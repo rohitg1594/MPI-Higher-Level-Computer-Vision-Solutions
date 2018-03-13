@@ -6,6 +6,7 @@ from scipy.cluster.hierarchy import linkage
 import numpy as np
 from collections import defaultdict
 import cyvlfeat.kmeans as vf
+import sys
 
 def sift_detect_and_compute(imgs):
     if not isinstance(imgs, list):
@@ -49,11 +50,26 @@ def create_vocabulary_tree(folder):
     # fit the tree
     vocab_tree, assignments = vf.hikmeans(desc_arr, 8, 4096)
 
-    # query the tree
-    i = np.random.randint(0, len(desc_arr))
-    path_to_leaf = np.asarray(vf.hikmeans_push(desc_arr, vocab_tree))[i]
-    leaf = np.asarray(vocab_tree.children[path_to_leaf[0]].children[path_to_leaf[1]].children[path_to_leaf[2]].centers[path_to_leaf[3]])
-    print(count_visual_words(vocab_tree))
+    return imgs_g, vocab_tree, descs, desc_to_kp, kps
+
+
+def Show_visual_word(path, folder):
+    imgs, vocab_tree, descs, desc_to_kp, kps = create_vocabulary_tree(folder)
+    leaf = np.asarray(vocab_tree.children[path[0]].children[path[1]].children[path[2]].centers[path[3]])
+    print(leaf)
+    descss = leaf[:10]
+
+    counter = 1
+    for desc in descss:
+        img_i, kp_i = desc_to_kp[desc]
+        plt.subplot(5,2,counter)
+        counter += 1
+        x , y = kps[img_i][kp_i].pt
+        scale = 6*round(kps[img_i][kp_i].size)
+        x, y = round(x), round(y)
+        plt.imshow(imgs[img_i][x-scale:x+scale,y-scale:y+scale], cmap='gray')
+    plt.show()
+
     # create index of clusters to descriptors
     index_desc = defaultdict(list)
     for i, label in enumerate(vocab_tree.labels_):
@@ -116,30 +132,13 @@ def draw_key_points(imgs, kps):
     plt.show()
 
 
-def Show_visual_word():
-    kps, imgs, tree, index_desc, index_images, desc_to_kp = create_vocabulary_tree("Covers_test")
-    descss = []
-    for i in range(10):
-        cno = np.random.randint(0, 4096)
-        descs = index_desc[cno]
-        descss.append(descs)
-        print(descs)
-    
-    for descs in descss:
-        counter = 1
-        n = len(descs)
-        plt.figure()
-        for desc in descs:
-            img_i, kp_i = desc_to_kp[desc]
-            plt.subplot(n,1,counter)
-            counter += 1
-            x , y = kps[img_i][kp_i].pt
-            scale = 6*round(kps[img_i][kp_i].size)
-            x, y = round(x), round(y)
-            plt.imshow(imgs[img_i][x-scale:x+scale,y-scale:y+scale], cmap='gray')
-        plt.show()
+
     
     
 if __name__ == "__main__":
-    Show_visual_word()
+    if sys.argv[1] == "show":
+        train = sys.argv[2]
+        random_path = list(np.random.randint(0, 8, size=4))
+        random_path = [6,5,5,1]
+        Show_visual_word(random_path, train)
 
