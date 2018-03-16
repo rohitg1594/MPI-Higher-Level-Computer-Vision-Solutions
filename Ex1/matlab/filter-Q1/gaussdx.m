@@ -1,3 +1,0 @@
-function [D, x] = gaussdx(sigma)
-
-% ...
