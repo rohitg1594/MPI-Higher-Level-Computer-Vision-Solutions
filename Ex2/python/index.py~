@@ -1,0 +1,65 @@
+from vocab import create_vocab_tree
+from collections import defaultdict
+import numpy as np
+from utils import *
+import cyvlfeat.kmeans as vf
+
+
+def Invert_file_index(folder):
+    imgs, vocab_tree, descs, desc_arr, desc_to_kp, kps, num_kps = create_vocab_tree(folder)
+    print(vocab_tree)
+    
+    # create index key set
+    paths = []
+    for desc in desc_arr:
+        desc = desc.reshape(1,desc.shape[0])
+        path_to_leaf = vf.hikmeans_push(desc, vocab_tree)
+        paths.append(tuple(np.asarray(path_to_leaf).tolist()[0]))
+    paths = set(paths)
+    
+    # create index of visual words to descriptors
+    index_desc = defaultdict(np.ndarray)
+    for path in paths:
+        descriptors =  np.asarray(vocab_tree.children[path[0]])#.children[path[1]].children[path[2]].centers)
+        #print(type(descriptors))
+        #print(len(descriptors))
+        #print(descriptors)
+        index_desc[path] = descriptors
+
+    # create index of visual words to images and scores
+    index_images = create_img_index(index_desc, desc_to_kp)
+    index_images = normalize(index_images, len(imgs), num_kps)
+        
+    return index_images
+
+    
+def create_img_index(index_desc, desc_to_kp):
+    index_images = defaultdict(dict)
+    for clus, descs in index_desc.items():
+        inside_dict = defaultdict(int)        
+        for desc in descs:
+            img_i = desc_to_kp[desc][0]
+            inside_dict[img_i] += 1
+        index_images[clus] = dict(inside_dict)
+
+    return dict(index_images)
+
+
+def normalize(index_images, num_images, num_kps):
+    N = num_images
+    for clus, inside_dict in index_images.items():
+        Ni = len(inside_dict)
+        for img, score in inside_dict.items():
+            score = (score/num_kps[img])*np.log(num_images/Ni)
+
+    return index_images
+
+
+def retrieval(folder):
+    index = Invert_file_index(folder)
+    counter = 1
+    for key, value in index.items():
+        '''print(key)
+        print(value)
+        if counter > 10:
+            break'''
