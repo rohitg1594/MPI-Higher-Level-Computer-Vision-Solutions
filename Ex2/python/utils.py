@@ -44,3 +44,9 @@ def draw_key_points(imgs, kps):
         counter += 1
         plt.imshow(imgs_kp[i])        
     plt.show()
+
+
+def closest_node(node, nodes):
+    nodes = np.asarray(nodes)
+    dist_2 = np.sum((nodes - node)**2, axis=1)
+    return np.argmin(dist_2)
