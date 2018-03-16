@@ -1,9 +1,10 @@
 from vocab import create_vocab_tree
-from collections import defaultdict
-import numpy as np
 from utils import *
 import cyvlfeat.kmeans as vf
 from sift import *
+
+from collections import defaultdict
+import numpy as np
 import matplotlib.pyplot as plt
 import operator
 
@@ -56,7 +57,6 @@ def retrieval(train_folder, img_q):
 
     sorted_img_score = sorted(img_score.items(), key=operator.itemgetter(1), reverse=True)
 
-    
     counter = 1
     rows = 5
     cols = 2
@@ -64,8 +64,7 @@ def retrieval(train_folder, img_q):
     plt.imshow(img_q, cmap='gray')
     plt.title('QUERY IMAGE')
     print('CANDIDATES GENERATED:')
-    for img_i, score in sorted_img_score[:rows*cols-1]:
-        
+    for img_i, score in sorted_img_score[:rows*cols-1]:      
         print('Index : {}, Score : {}'.format(img_i, score))
         counter += 1
         plt.subplot(rows, cols, counter)

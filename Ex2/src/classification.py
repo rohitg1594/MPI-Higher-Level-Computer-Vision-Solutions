@@ -1,6 +1,7 @@
 from utils import load_images, concatenate_descriptors, closest_node
 from sift import sift_detect_and_compute
 from cyvlfeat.kmeans.kmeans import kmeans
+
 import numpy as np
 import cv2
 import glob
@@ -34,7 +35,6 @@ def extract_bow_features(folder, codebook):
         for desc in descs:
             code = closest_node(desc, codebook)
             hist_arr[i, code] += 1
-
 
     return hist_arr, labels
     
