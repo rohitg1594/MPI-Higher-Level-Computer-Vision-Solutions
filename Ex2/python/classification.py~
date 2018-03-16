@@ -1,0 +1,22 @@
+from sklearn.cluster import KMeans
+from utils import load_images, concatenate_descriptors, closest_node
+from sift import sift_compute_and_detect
+from cyvlfeat.kmeans.kmeans import kmeans
+
+
+def create_codebook(folder, vocab_size=4096):
+    imgs, _ = load_images(folder)
+    kps, descs = sift_compute_and_detect(imgs)
+    descs, desc_to_kp = concatenate_descriptors(descs)
+    codebook, _ = kmeans(descs, vocab_size)
+
+    return codebook, desc_to_kp
+
+
+def extract_bow_features(folder, codebook):
+    imgs, _ = load_images(folder)
+    for img in imgs:
+        kps, descs = sift_compute_and_detect(img)
+        print(type(descs))
+    
+    
